@@ -18,6 +18,7 @@
 		03F1B96D1E0E5D4B00762B86 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03F1B96C1E0E5D4B00762B86 /* Metal.framework */; };
 		03F1B96F1E0E5D5000762B86 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03F1B96E1E0E5D5000762B86 /* QuartzCore.framework */; };
 		03F1B9711E0E5D7500762B86 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03F1B9701E0E5D7500762B86 /* UIKit.framework */; };
+		03F1B9731E0E5DEB00762B86 /* MyShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 03F1B9721E0E5DEB00762B86 /* MyShader.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		03F1B96C1E0E5D4B00762B86 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		03F1B96E1E0E5D5000762B86 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		03F1B9701E0E5D7500762B86 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		03F1B9721E0E5DEB00762B86 /* MyShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = MyShader.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 				03F1B93C1E0E5D2000762B86 /* AppDelegate.m */,
 				03F1B93E1E0E5D2000762B86 /* ViewController.h */,
 				03F1B93F1E0E5D2000762B86 /* ViewController.m */,
+				03F1B9721E0E5DEB00762B86 /* MyShader.metal */,
 				03F1B9411E0E5D2000762B86 /* Main.storyboard */,
 				03F1B9441E0E5D2000762B86 /* Assets.xcassets */,
 				03F1B9461E0E5D2000762B86 /* LaunchScreen.storyboard */,
@@ -296,6 +299,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				03F1B9731E0E5DEB00762B86 /* MyShader.metal in Sources */,
 				03F1B9401E0E5D2000762B86 /* ViewController.m in Sources */,
 				03F1B93D1E0E5D2000762B86 /* AppDelegate.m in Sources */,
 				03F1B93A1E0E5D2000762B86 /* main.m in Sources */,
