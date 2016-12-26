@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import <simd/simd.h>
 
 @interface ViewController ()
 
@@ -40,6 +41,13 @@ static float quadVertexData[] =
     CAMetalLayer *metalLayer;
     
     CADisplayLink *displayLink;
+    
+    //data members for transformation
+    id<MTLBuffer> transformationUniform;
+    
+    matrix_float4x4 rotationTransformation;
+    
+    float rotation;
     
 }
 
@@ -88,6 +96,10 @@ static float quadVertexData[] =
     //load the data QuadVertexData into the buffer
     vertexBuffer=[mtlDevice newBufferWithBytes:quadVertexData length:sizeof(quadVertexData) options:MTLResourceOptionCPUCacheModeDefault];
     
+    
+    //set initial rotation to 0
+    rotation=0.0;
+    
     //Set the display link object to call the renderscene method continuously
     displayLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(renderScene)];
     
@@ -97,6 +109,10 @@ static float quadVertexData[] =
 }
 
 -(void) renderScene{
+    
+    //Update Transformation
+    [self updateTransformation];
+    
     
     //7. Get the next drawable layer
     frameDrawable=[metalLayer nextDrawable];
@@ -128,6 +144,9 @@ static float quadVertexData[] =
     //set the vertex buffer object and the index for the data
     [renderEncoder setVertexBuffer:vertexBuffer offset:0 atIndex:0];
     
+    //update the uniform
+    [renderEncoder setVertexBuffer:transformationUniform offset:0 atIndex:1];
+    
     //Set the draw command
     [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
     
@@ -139,6 +158,86 @@ static float quadVertexData[] =
     
     //12. buffer is ready
     [mtlCommandBuffer commit];
+}
+
+-(void)updateTransformation{
+    
+    //Update the rotation Transformation Matrix
+    rotationTransformation=matrix_from_rotation(rotation*M_PI/180, 0.0, 0.0, 1.0);
+ 
+    //Update the Transformation Uniform
+    transformationUniform=[mtlDevice newBufferWithBytes:(void*)&rotationTransformation length:sizeof(rotationTransformation) options:MTLResourceOptionCPUCacheModeDefault];
+    
+}
+
+
+static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, float z)
+{
+    vector_float3 v = vector_normalize(((vector_float3){x, y, z}));
+    float cos = cosf(radians);
+    float cosp = 1.0f - cos;
+    float sin = sinf(radians);
+    
+    matrix_float4x4 m = {
+        .columns[0] = {
+            cos + cosp * v.x * v.x,
+            cosp * v.x * v.y + v.z * sin,
+            cosp * v.x * v.z - v.y * sin,
+            0.0f,
+        },
+        
+        .columns[1] = {
+            cosp * v.x * v.y - v.z * sin,
+            cos + cosp * v.y * v.y,
+            cosp * v.y * v.z + v.x * sin,
+            0.0f,
+        },
+        
+        .columns[2] = {
+            cosp * v.x * v.z + v.y * sin,
+            cosp * v.y * v.z - v.x * sin,
+            cos + cosp * v.z * v.z,
+            0.0f,
+        },
+        
+        .columns[3] = { 0.0f, 0.0f, 0.0f, 1.0f
+        }
+    };
+    return m;
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    for (UITouch *myTouch in touches) {
+        CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
+        
+        //get the x-position of the touch
+        rotation=touchPosition.x;
+        
+    }
+    
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
+    
+    for (UITouch *myTouch in touches) {
+        CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
+        
+        
+        
+    }
+    
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
+    
+    for (UITouch *myTouch in touches) {
+        CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
+        
+        //get the x-position of the touch
+        rotation=touchPosition.x;
+        
+    }
 }
 
 -(void)dealloc{
