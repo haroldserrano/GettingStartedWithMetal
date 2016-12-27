@@ -32,8 +32,6 @@ static float quadVertexData[] =
     
     id<MTLRenderPipelineState> renderPipelineState;
     
-    id<MTLBuffer> vertexBuffer;
-    
     id <CAMetalDrawable> frameDrawable;
     
     MTLRenderPipelineDescriptor *mtlRenderPipelineDescriptor;
@@ -42,12 +40,17 @@ static float quadVertexData[] =
     
     CADisplayLink *displayLink;
     
-    //data members for transformation
+    //Attribute
+    id<MTLBuffer> vertexAttribute;
+    
+    //Uniform
     id<MTLBuffer> transformationUniform;
     
-    matrix_float4x4 rotationTransformation;
+    //Matrix transformation
+    matrix_float4x4 rotationMatrix;
     
-    float rotation;
+    //rotation angle
+    float rotationAngle;
     
 }
 
@@ -93,22 +96,22 @@ static float quadVertexData[] =
     
     //6. create resources
     
-    //load the data QuadVertexData into the buffer
-    vertexBuffer=[mtlDevice newBufferWithBytes:quadVertexData length:sizeof(quadVertexData) options:MTLResourceOptionCPUCacheModeDefault];
+    //load the data attribute into the buffer
+    vertexAttribute=[mtlDevice newBufferWithBytes:quadVertexData length:sizeof(quadVertexData) options:MTLResourceOptionCPUCacheModeDefault];
     
     
-    //set initial rotation to 0
-    rotation=0.0;
+    //set initial rotation Angle to 0
+    rotationAngle=0.0;
     
     //Set the display link object to call the renderscene method continuously
-    displayLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(renderScene)];
+    displayLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(renderPass)];
     
     [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     
     
 }
 
--(void) renderScene{
+-(void) renderPass{
     
     //Update Transformation
     [self updateTransformation];
@@ -142,9 +145,9 @@ static float quadVertexData[] =
     [renderEncoder setRenderPipelineState:renderPipelineState];
     
     //set the vertex buffer object and the index for the data
-    [renderEncoder setVertexBuffer:vertexBuffer offset:0 atIndex:0];
+    [renderEncoder setVertexBuffer:vertexAttribute offset:0 atIndex:0];
     
-    //update the uniform
+    //set the uniform buffer and the index for the data
     [renderEncoder setVertexBuffer:transformationUniform offset:0 atIndex:1];
     
     //Set the draw command
@@ -163,10 +166,10 @@ static float quadVertexData[] =
 -(void)updateTransformation{
     
     //Update the rotation Transformation Matrix
-    rotationTransformation=matrix_from_rotation(rotation*M_PI/180, 0.0, 0.0, 1.0);
+    rotationMatrix=matrix_from_rotation(rotationAngle*M_PI/180, 0.0, 0.0, 1.0);
  
     //Update the Transformation Uniform
-    transformationUniform=[mtlDevice newBufferWithBytes:(void*)&rotationTransformation length:sizeof(rotationTransformation) options:MTLResourceOptionCPUCacheModeDefault];
+    transformationUniform=[mtlDevice newBufferWithBytes:(void*)&rotationMatrix length:sizeof(rotationMatrix) options:MTLResourceOptionCPUCacheModeDefault];
     
 }
 
@@ -212,7 +215,7 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
         CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
         
         //get the x-position of the touch
-        rotation=touchPosition.x;
+        rotationAngle=touchPosition.x;
         
     }
     
@@ -235,7 +238,7 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
         CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
         
         //get the x-position of the touch
-        rotation=touchPosition.x;
+        rotationAngle=touchPosition.x;
         
     }
 }
