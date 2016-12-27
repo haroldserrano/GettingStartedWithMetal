@@ -11,6 +11,7 @@ using namespace metal;
 
 vertex float4 vertexShader(device float4 *vertices [[buffer(0)]], constant float4x4 &transformation [[buffer(1)]], uint vid [[vertex_id]]){
     
+    //Transform the vertices of the rectangle
     return transformation*vertices[vid];
     
 }
