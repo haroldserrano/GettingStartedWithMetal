@@ -9,9 +9,12 @@
 #include <metal_stdlib>
 using namespace metal;
 
-vertex float4 vertexShader(device float4 *vertices [[buffer(0)]], constant float4x4 &transformation [[buffer(1)]], uint vid [[vertex_id]]){
+vertex float4 vertexShader(device float4 *vertices [[buffer(0)]], constant float4x4 &mvp [[buffer(1)]],uint vid [[vertex_id]]){
     
-    return transformation*vertices[vid];
+    float4 pos=mvp*vertices[vid];
+    
+    return pos;
+    
     
 }
 

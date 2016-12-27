@@ -13,16 +13,29 @@
 
 @end
 
-static float quadVertexData[] =
+static float cubeVertices[] =
 {
-    0.5, -0.5, 0.0, 1.0,
-    -0.5, -0.5, 0.0, 1.0,
-    -0.5,  0.5, 0.0, 1.0,
+    -0.5, 0.5, 0.5,1,
+    -0.5,-0.5, 0.5,1,
+    0.5,-0.5, 0.5,1,
+    0.5, 0.5, 0.5,1,
     
-    0.5,  0.5, 0.0, 1.0,
-    0.5, -0.5, 0.0, 1.0,
-    -0.5,  0.5, 0.0, 1.0
+    -0.5, 0.5,-0.5,1,
+    -0.5,-0.5,-0.5,1,
+    0.5,-0.5,-0.5,1,
+    0.5, 0.5,-0.5,1,
+    
 };
+
+const uint16_t indices[] = {
+    3,2,6,6,7,3,
+    4,5,1,1,0,4,
+    4,0,3,3,7,4,
+    1,5,6,6,2,1,
+    0,1,2,2,3,0,
+    7,6,5,5,4,7
+};
+
 
 @implementation ViewController{
     
@@ -43,11 +56,10 @@ static float quadVertexData[] =
     //Attribute
     id<MTLBuffer> vertexAttribute;
     
-    //Uniform
-    id<MTLBuffer> transformationUniform;
+    id<MTLBuffer> indexBuffer;
     
-    //Matrix transformation
-    matrix_float4x4 rotationMatrix;
+    //Uniform
+    id<MTLBuffer> mvpUniform;
     
     //rotation angle
     float rotationAngle;
@@ -97,8 +109,10 @@ static float quadVertexData[] =
     //6. create resources
     
     //load the data attribute into the buffer
-    vertexAttribute=[mtlDevice newBufferWithBytes:quadVertexData length:sizeof(quadVertexData) options:MTLResourceOptionCPUCacheModeDefault];
+    vertexAttribute=[mtlDevice newBufferWithBytes:cubeVertices length:sizeof(cubeVertices) options:MTLResourceOptionCPUCacheModeDefault];
     
+    //load the index into the buffer
+    indexBuffer=[mtlDevice newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //set initial rotation Angle to 0
     rotationAngle=0.0;
@@ -148,10 +162,10 @@ static float quadVertexData[] =
     [renderEncoder setVertexBuffer:vertexAttribute offset:0 atIndex:0];
     
     //set the uniform buffer and the index for the data
-    [renderEncoder setVertexBuffer:transformationUniform offset:0 atIndex:1];
+    [renderEncoder setVertexBuffer:mvpUniform offset:0 atIndex:1];
     
     //Set the draw command
-    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
+    [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indexBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indexBuffer indexBufferOffset:0];
     
     //End encoding
     [renderEncoder endEncoding];
@@ -165,12 +179,47 @@ static float quadVertexData[] =
 
 -(void)updateTransformation{
     
-    //Update the rotation Transformation Matrix
-    rotationMatrix=matrix_from_rotation(rotationAngle*M_PI/180, 0.0, 0.0, 1.0);
- 
-    //Update the Transformation Uniform
-    transformationUniform=[mtlDevice newBufferWithBytes:(void*)&rotationMatrix length:sizeof(rotationMatrix) options:MTLResourceOptionCPUCacheModeDefault];
+    matrix_float4x4 modelMatrix=matrix_multiply(matrix_from_translation(0.0f, 0.0f, 5.0f), matrix_from_rotation(rotationAngle* (M_PI / 180.0f), 0.0f, 1.0f, 0.0f));
     
+    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 0.0);
+    
+    float aspect=self.view.bounds.size.width/self.view.bounds.size.height;
+    
+    matrix_float4x4 projectiveMatrix=matrix_from_perspective_fov_aspectLH(45.0f * (M_PI / 180.0f), aspect, 0.1f, 100.0f);
+    
+    
+    matrix_float4x4 modelViewMatrix=matrix_multiply(viewMatrix, modelMatrix);
+    
+    matrix_float4x4 modelViewProjection=matrix_multiply(projectiveMatrix, modelViewMatrix);
+    
+    mvpUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewProjection length:sizeof(modelViewProjection) options:MTLResourceOptionCPUCacheModeDefault];
+    
+}
+
+
+#pragma mark Linear Algebra Utilities
+
+static matrix_float4x4 matrix_from_perspective_fov_aspectLH(const float fovY, const float aspect, const float nearZ, const float farZ)
+{
+    float yscale = 1.0f / tanf(fovY * 0.5f); // 1 / tan == cot
+    float xscale = yscale / aspect;
+    float q = farZ / (farZ - nearZ);
+    
+    matrix_float4x4 m = {
+        .columns[0] = { xscale, 0.0f, 0.0f, 0.0f },
+        .columns[1] = { 0.0f, yscale, 0.0f, 0.0f },
+        .columns[2] = { 0.0f, 0.0f, q, 1.0f },
+        .columns[3] = { 0.0f, 0.0f, q * -nearZ, 0.0f }
+    };
+    
+    return m;
+}
+
+static matrix_float4x4 matrix_from_translation(float x, float y, float z)
+{
+    matrix_float4x4 m = matrix_identity_float4x4;
+    m.columns[3] = (vector_float4) { x, y, z, 1.0 };
+    return m;
 }
 
 
