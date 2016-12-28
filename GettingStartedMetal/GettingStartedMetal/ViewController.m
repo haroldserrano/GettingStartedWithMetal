@@ -56,7 +56,7 @@ const uint16_t indices[] = {
     //Attribute
     id<MTLBuffer> vertexAttribute;
     
-    id<MTLBuffer> indexBuffer;
+    id<MTLBuffer> indicesBuffer;
     
     //Uniform
     id<MTLBuffer> mvpUniform;
@@ -112,7 +112,7 @@ const uint16_t indices[] = {
     vertexAttribute=[mtlDevice newBufferWithBytes:cubeVertices length:sizeof(cubeVertices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //load the index into the buffer
-    indexBuffer=[mtlDevice newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceOptionCPUCacheModeDefault];
+    indicesBuffer=[mtlDevice newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //set initial rotation Angle to 0
     rotationAngle=0.0;
@@ -144,7 +144,7 @@ const uint16_t indices[] = {
     
     //set the following states for the pipeline. i.e., clear the texture before each render pass
     mtlRenderPassDescriptor.colorAttachments[0].loadAction=MTLLoadActionClear;
-    mtlRenderPassDescriptor.colorAttachments[0].clearColor=MTLClearColorMake(1.0, 1.0, 1.0, 1.0);
+    mtlRenderPassDescriptor.colorAttachments[0].clearColor=MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
     mtlRenderPassDescriptor.colorAttachments[0].storeAction=MTLStoreActionStore;
     
     //9. create a command buffer
@@ -152,22 +152,22 @@ const uint16_t indices[] = {
     
     //10. create a command encoder
     
-    //creat a command encoder
+    //10a. creat a command encoder
     id<MTLRenderCommandEncoder> renderEncoder=[mtlCommandBuffer renderCommandEncoderWithDescriptor:mtlRenderPassDescriptor];
     
-    //Configure enconder with the pipeline
+    //10b. Configure enconder with the pipeline
     [renderEncoder setRenderPipelineState:renderPipelineState];
     
-    //set the vertex buffer object and the index for the data
+    //10c. set the vertex buffer object and the index for the data
     [renderEncoder setVertexBuffer:vertexAttribute offset:0 atIndex:0];
     
-    //set the uniform buffer and the index for the data
+    //10d. set the uniform buffer and the index for the data
     [renderEncoder setVertexBuffer:mvpUniform offset:0 atIndex:1];
     
-    //Set the draw command
-    [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indexBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indexBuffer indexBufferOffset:0];
+    //10e. Set the draw command
+    [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indicesBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indicesBuffer indexBufferOffset:0];
     
-    //End encoding
+    //10f. End encoding
     [renderEncoder endEncoding];
     
     //11. present the drawable
@@ -179,20 +179,32 @@ const uint16_t indices[] = {
 
 -(void)updateTransformation{
     
-    matrix_float4x4 modelMatrix=matrix_multiply(matrix_from_translation(0.0f, 0.0f, 5.0f), matrix_from_rotation(rotationAngle* (M_PI / 180.0f), 0.0f, 1.0f, 0.0f));
     
-    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 0.0);
+    //Rotate the model and produce the model matrix
+    matrix_float4x4 modelMatrix=matrix_from_rotation(rotationAngle*M_PI/180, 0.0, 1.0, 0.0);
     
+    //set the world matrix to its identity matrix.i.e, no transformation. It's origin is at 0,0,0
+    matrix_float4x4 worldMatrix=matrix_identity_float4x4;
+    
+    //Set the camera position in the z-direction
+    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 3.0);
+    
+    //compute the projective-perspective matrix
     float aspect=self.view.bounds.size.width/self.view.bounds.size.height;
     
     matrix_float4x4 projectiveMatrix=matrix_from_perspective_fov_aspectLH(45.0f * (M_PI / 180.0f), aspect, 0.1f, 100.0f);
     
+    //Transform the model into the world's coordinate space
+    matrix_float4x4 modelWorldTransformation=matrix_multiply(worldMatrix, modelMatrix);
     
-    matrix_float4x4 modelViewMatrix=matrix_multiply(viewMatrix, modelMatrix);
+    //Transform the Model-World Space into the camera's coordinate space
+    matrix_float4x4 modelViewTransformation=matrix_multiply(viewMatrix, modelWorldTransformation);
     
-    matrix_float4x4 modelViewProjection=matrix_multiply(projectiveMatrix, modelViewMatrix);
+    //Transfom the Model-View Space into the Projection space
+    matrix_float4x4 modelViewProjectionTransformation=matrix_multiply(projectiveMatrix, modelViewTransformation);
     
-    mvpUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewProjection length:sizeof(modelViewProjection) options:MTLResourceOptionCPUCacheModeDefault];
+    //Load the MVP transformation into the MTLBuffer
+    mvpUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewProjectionTransformation length:sizeof(modelViewProjectionTransformation) options:MTLResourceOptionCPUCacheModeDefault];
     
 }
 
