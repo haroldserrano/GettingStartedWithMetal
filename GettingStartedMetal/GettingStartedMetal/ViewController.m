@@ -130,7 +130,7 @@ static float quadVertexData[] =
     
     //set the following states for the pipeline. i.e., clear the texture before each render pass
     mtlRenderPassDescriptor.colorAttachments[0].loadAction=MTLLoadActionClear;
-    mtlRenderPassDescriptor.colorAttachments[0].clearColor=MTLClearColorMake(1.0, 1.0, 1.0, 1.0);
+    mtlRenderPassDescriptor.colorAttachments[0].clearColor=MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
     mtlRenderPassDescriptor.colorAttachments[0].storeAction=MTLStoreActionStore;
     
     //9. create a command buffer
