@@ -8,33 +8,11 @@
 
 #import "ViewController.h"
 #import <simd/simd.h>
+#include "models.h"
 
 @interface ViewController ()
 
 @end
-
-static float cubeVertices[] =
-{
-    -0.5, 0.5, 0.5,1,
-    -0.5,-0.5, 0.5,1,
-    0.5,-0.5, 0.5,1,
-    0.5, 0.5, 0.5,1,
-    
-    -0.5, 0.5,-0.5,1,
-    -0.5,-0.5,-0.5,1,
-    0.5,-0.5,-0.5,1,
-    0.5, 0.5,-0.5,1,
-    
-};
-
-const uint16_t indices[] = {
-    3,2,6,6,7,3,
-    4,5,1,1,0,4,
-    4,0,3,3,7,4,
-    1,5,6,6,2,1,
-    0,1,2,2,3,0,
-    7,6,5,5,4,7
-};
 
 
 @implementation ViewController{
@@ -45,9 +23,13 @@ const uint16_t indices[] = {
     
     id<MTLRenderPipelineState> renderPipelineState;
     
+    id<MTLDepthStencilState> depthStencilState;
+    
     id <CAMetalDrawable> frameDrawable;
     
     MTLRenderPipelineDescriptor *mtlRenderPipelineDescriptor;
+    
+    
     
     CAMetalLayer *metalLayer;
     
@@ -56,10 +38,14 @@ const uint16_t indices[] = {
     //Attribute
     id<MTLBuffer> vertexAttribute;
     
+    id<MTLBuffer> normalAttribute;
+    
     id<MTLBuffer> indicesBuffer;
     
     //Uniform
-    id<MTLBuffer> mvpUniform;
+    id<MTLBuffer> mvpMatrixUniform;
+    
+    id<MTLBuffer> normalMatrixUniform;
     
     //rotation angle
     float rotationAngle;
@@ -103,16 +89,25 @@ const uint16_t indices[] = {
     //specify the target-texture pixel format
     mtlRenderPipelineDescriptor.colorAttachments[0].pixelFormat=MTLPixelFormatBGRA8Unorm;
     
+    
+    MTLDepthStencilDescriptor *depthStencilDescriptor = [[MTLDepthStencilDescriptor alloc] init];
+    depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
+    depthStencilDescriptor.depthWriteEnabled = YES;
+    depthStencilState=[mtlDevice newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+    
+    
     //create the Rendering Pipeline Object
     renderPipelineState=[mtlDevice newRenderPipelineStateWithDescriptor:mtlRenderPipelineDescriptor error:nil];
     
     //6. create resources
     
     //load the data attribute into the buffer
-    vertexAttribute=[mtlDevice newBufferWithBytes:cubeVertices length:sizeof(cubeVertices) options:MTLResourceOptionCPUCacheModeDefault];
+    vertexAttribute=[mtlDevice newBufferWithBytes:CubeVertices length:sizeof(CubeVertices) options:MTLResourceOptionCPUCacheModeDefault];
+    
+    normalAttribute=[mtlDevice newBufferWithBytes:CubeNormals length:sizeof(CubeNormals) options:MTLResourceOptionCPUCacheModeDefault];
     
     //load the index into the buffer
-    indicesBuffer=[mtlDevice newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceOptionCPUCacheModeDefault];
+    indicesBuffer=[mtlDevice newBufferWithBytes:CubeIndices length:sizeof(CubeIndices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //set initial rotation Angle to 0
     rotationAngle=0.0;
@@ -161,8 +156,18 @@ const uint16_t indices[] = {
     //10c. set the vertex buffer object and the index for the data
     [renderEncoder setVertexBuffer:vertexAttribute offset:0 atIndex:0];
     
+    [renderEncoder setVertexBuffer:normalAttribute offset:0 atIndex:1];
+    
     //10d. set the uniform buffer and the index for the data
-    [renderEncoder setVertexBuffer:mvpUniform offset:0 atIndex:1];
+    [renderEncoder setVertexBuffer:mvpMatrixUniform offset:0 atIndex:2];
+    
+    [renderEncoder setVertexBuffer:normalMatrixUniform offset:0 atIndex:3];
+    
+    [renderEncoder setDepthStencilState:depthStencilState];
+    
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    
+    [renderEncoder setCullMode:MTLCullModeFront];
     
     //10e. Set the draw command
     [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indicesBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indicesBuffer indexBufferOffset:0];
@@ -187,7 +192,7 @@ const uint16_t indices[] = {
     matrix_float4x4 worldMatrix=matrix_identity_float4x4;
     
     //Set the camera position in the z-direction
-    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 3.0);
+    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 5.0);
     
     //compute the projective-perspective matrix
     float aspect=self.view.bounds.size.width/self.view.bounds.size.height;
@@ -204,8 +209,15 @@ const uint16_t indices[] = {
     matrix_float4x4 modelViewProjectionTransformation=matrix_multiply(projectiveMatrix, modelViewTransformation);
     
     //Load the MVP transformation into the MTLBuffer
-    mvpUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewProjectionTransformation length:sizeof(modelViewProjectionTransformation) options:MTLResourceOptionCPUCacheModeDefault];
+    mvpMatrixUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewProjectionTransformation length:sizeof(modelViewProjectionTransformation) options:MTLResourceOptionCPUCacheModeDefault];
     
+    //get normal matrix
+    matrix_float3x3 normalMatrix={modelViewTransformation.columns[0].xyz,modelViewTransformation.columns[1].xyz,modelViewTransformation.columns[2].xyz};
+    
+    normalMatrix=matrix_transpose(matrix_invert(normalMatrix));
+    
+    normalMatrixUniform=[mtlDevice newBufferWithBytes:(void*)&normalMatrix length:sizeof(normalMatrix) options:MTLResourceOptionCPUCacheModeDefault];
+
 }
 
 

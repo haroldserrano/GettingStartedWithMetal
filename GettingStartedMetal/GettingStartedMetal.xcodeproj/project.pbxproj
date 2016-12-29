@@ -59,6 +59,7 @@
 		03F1B96E1E0E5D5000762B86 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		03F1B9701E0E5D7500762B86 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		03F1B9721E0E5DEB00762B86 /* MyShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = MyShader.metal; sourceTree = "<group>"; };
+		03F989E01E156C4800CE9FD2 /* models.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = models.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +119,7 @@
 				03F1B93E1E0E5D2000762B86 /* ViewController.h */,
 				03F1B93F1E0E5D2000762B86 /* ViewController.m */,
 				03F1B9721E0E5DEB00762B86 /* MyShader.metal */,
+				03F989E01E156C4800CE9FD2 /* models.h */,
 				03F1B9411E0E5D2000762B86 /* Main.storyboard */,
 				03F1B9441E0E5D2000762B86 /* Assets.xcassets */,
 				03F1B9461E0E5D2000762B86 /* LaunchScreen.storyboard */,
