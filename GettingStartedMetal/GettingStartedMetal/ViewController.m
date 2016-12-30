@@ -45,6 +45,8 @@
     //Uniform
     id<MTLBuffer> mvpMatrixUniform;
     
+    id<MTLBuffer> mvMatrixUniform;
+    
     id<MTLBuffer> normalMatrixUniform;
     
     //rotation angle
@@ -163,6 +165,8 @@
     
     [renderEncoder setVertexBuffer:normalMatrixUniform offset:0 atIndex:3];
     
+    [renderEncoder setVertexBuffer:mvMatrixUniform offset:0 atIndex:4];
+    
     [renderEncoder setDepthStencilState:depthStencilState];
     
     [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -192,7 +196,7 @@
     matrix_float4x4 worldMatrix=matrix_identity_float4x4;
     
     //Set the camera position in the z-direction
-    matrix_float4x4 viewMatrix=matrix_from_translation(0.0, 0.0, 5.0);
+    matrix_float4x4 viewMatrix=matrix_multiply(matrix_from_rotation(-10.0*M_PI/180, 1.0, 0.0, 0.0),matrix_from_translation(0.0, -4.5, 15.0));
     
     //compute the projective-perspective matrix
     float aspect=self.view.bounds.size.width/self.view.bounds.size.height;
@@ -216,8 +220,12 @@
     
     normalMatrix=matrix_transpose(matrix_invert(normalMatrix));
     
+    //load the NormalMatrix into the MTLBuffer
     normalMatrixUniform=[mtlDevice newBufferWithBytes:(void*)&normalMatrix length:sizeof(normalMatrix) options:MTLResourceOptionCPUCacheModeDefault];
 
+    //load the mv transfomration into the MTLBuffer
+    mvMatrixUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewTransformation length:sizeof(modelViewTransformation) options:MTLResourceOptionCPUCacheModeDefault];
+ 
 }
 
 
