@@ -49,6 +49,8 @@ const uint16_t indices[] = {
     
     MTLRenderPipelineDescriptor *mtlRenderPipelineDescriptor;
     
+    id<MTLDepthStencilState> depthStencilState;
+    
     CAMetalLayer *metalLayer;
     
     CADisplayLink *displayLink;
@@ -102,6 +104,14 @@ const uint16_t indices[] = {
     
     //specify the target-texture pixel format
     mtlRenderPipelineDescriptor.colorAttachments[0].pixelFormat=MTLPixelFormatBGRA8Unorm;
+    
+    
+    //specify a depth stencil descriptor
+    MTLDepthStencilDescriptor *depthStencilDescriptor = [[MTLDepthStencilDescriptor alloc] init];
+    depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
+    depthStencilDescriptor.depthWriteEnabled = YES;
+    depthStencilState=[mtlDevice newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+    
     
     //create the Rendering Pipeline Object
     renderPipelineState=[mtlDevice newRenderPipelineStateWithDescriptor:mtlRenderPipelineDescriptor error:nil];
@@ -166,6 +176,12 @@ const uint16_t indices[] = {
     
     //10e. Set the draw command
     [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indicesBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indicesBuffer indexBufferOffset:0];
+    
+    [renderEncoder setDepthStencilState:depthStencilState];
+    
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    
+    [renderEncoder setCullMode:MTLCullModeFront];
     
     //10f. End encoding
     [renderEncoder endEncoding];
