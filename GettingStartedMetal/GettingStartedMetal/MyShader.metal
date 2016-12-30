@@ -35,16 +35,16 @@ struct Material{
 
 constant Light light={
     .direction={3.0,5.0,-3.0},
-    .ambientColor={0.05,0.05,0.07},
-    .diffuseColor={0.4, 0.4, 0.4},
-    .specularColor={1.0,1.0,1.0}
+    .ambientColor={0.1,0.1,0.1},
+    .diffuseColor={0.9, 0.9, 0.9},
+    .specularColor={0.8,0.8,0.8}
 };
 
 constant Material material={
   
-    .ambientColor={0.9,0.1,0},
-    .diffuseColor={0.9,0.1,0},
-    .specularColor={1.0,1.0,1.0},
+    .ambientColor={0.1,0.1,0.1},
+    .diffuseColor={0.4,0.4,1.0},
+    .specularColor={0.8,0.8,0.8},
     .specularPower=100
     
 };
