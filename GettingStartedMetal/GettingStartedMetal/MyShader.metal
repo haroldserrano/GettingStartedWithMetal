@@ -16,42 +16,12 @@ struct VertexOutput{
     
 };
 
-struct Light{
-    
-    float3 direction;
-    float3 ambientColor;
-    float3 diffuseColor;
-    float3 specularColor;
-};
 
-struct Material{
-    
-    float3 ambientColor;
-    float3 diffuseColor;
-    float3 specularColor;
-    float specularPower;
-};
-
-
-constant Light light={
-    .direction={3.0,5.0,-3.0},
-    .ambientColor={0.1,0.1,0.1},
-    .diffuseColor={0.9, 0.9, 0.9},
-    .specularColor={0.8,0.8,0.8}
-};
-
-constant Material material={
-  
-    .ambientColor={0.1,0.1,0.1},
-    .diffuseColor={0.4,0.4,1.0},
-    .specularColor={0.8,0.8,0.8},
-    .specularPower=100
-    
-};
-
-vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], uint vid [[vertex_id]]){
+vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], constant float4 &lightPosition[[buffer(5)]], uint vid [[vertex_id]]){
     
     VertexOutput vertexOut;
+    
+    float4 lightDiffuseColor=float4(0.9, 0.9, 0.9,1.0);
     
     //transform the vertices by the mvp transformation
     float4 pos=mvp*vertices[vid];
@@ -59,38 +29,22 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     //compute lighting
     
     float3 eyeNormal=normalize(normalMatrix*normal[vid].xyz);
+    
     float4 eyeCoords=mvMatrix*vertices[vid];
     
-    float3 s=normalize(light.direction-eyeCoords.xyz);
-    float3 v=normalize(-eyeCoords.xyz);
-    float3 r=reflect(-s,eyeNormal);
-    
-    
-    //compute ambient lighting
-    float3 ambientLight=light.ambientColor*material.ambientColor;
+    float3 s=normalize(lightPosition.xyz-eyeCoords.xyz);
     
     //compute diffuse lighting
     
     float sDotN=max(0.0,dot(eyeNormal,s));
     
-    float3 diffuseLight=sDotN*light.diffuseColor;
-    
-    //compute specular lighting
-    float3 specularLight=float3(0.0,0.0,0.0);
-    
-    if(sDotN>0.0){
-        
-        specularLight=light.specularColor*material.specularColor*pow(max(dot(r,v),0.0),material.specularPower);
-        
-    }
-    
+    float4 diffuseLight=sDotN*lightDiffuseColor;
+
     //add total lighting
-    float4 totalLights=float4(ambientLight+diffuseLight+specularLight,1.0);
-    
     
     vertexOut.position=pos;
     
-    vertexOut.color=totalLights;
+    vertexOut.color=diffuseLight;
 
     return vertexOut;
     

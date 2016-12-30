@@ -49,8 +49,12 @@
     
     id<MTLBuffer> normalMatrixUniform;
     
-    //rotation angle
-    float rotationAngle;
+    //light
+    id<MTLBuffer> mvLightUniform;
+    
+    //touch position
+    float xPosition;
+    float yPosition;
     
 }
 
@@ -111,8 +115,9 @@
     //load the index into the buffer
     indicesBuffer=[mtlDevice newBufferWithBytes:CubeIndices length:sizeof(CubeIndices) options:MTLResourceOptionCPUCacheModeDefault];
     
-    //set initial rotation Angle to 0
-    rotationAngle=0.0;
+    //set initial position to 0
+    xPosition=0.0;
+    yPosition=0.0;
     
     //Set the display link object to call the renderscene method continuously
     displayLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(renderPass)];
@@ -167,6 +172,8 @@
     
     [renderEncoder setVertexBuffer:mvMatrixUniform offset:0 atIndex:4];
     
+    [renderEncoder setVertexBuffer:mvLightUniform offset:0 atIndex:5];
+    
     [renderEncoder setDepthStencilState:depthStencilState];
     
     [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -190,7 +197,7 @@
     
     
     //Rotate the model and produce the model matrix
-    matrix_float4x4 modelMatrix=matrix_from_rotation(rotationAngle*M_PI/180, 0.0, 1.0, 0.0);
+    matrix_float4x4 modelMatrix=matrix_from_rotation(-150.0*M_PI/180, 0.0, 1.0, 0.0);
     
     //set the world matrix to its identity matrix.i.e, no transformation. It's origin is at 0,0,0
     matrix_float4x4 worldMatrix=matrix_identity_float4x4;
@@ -225,6 +232,17 @@
 
     //load the mv transfomration into the MTLBuffer
     mvMatrixUniform=[mtlDevice newBufferWithBytes:(void*)&modelViewTransformation length:sizeof(modelViewTransformation) options:MTLResourceOptionCPUCacheModeDefault];
+    
+    //light position
+    
+    vector_float4 lightPosition={xPosition*5.0,yPosition*5.0+10.0,-5.0,1.0};
+    
+    lightPosition=matrix_multiply(viewMatrix, lightPosition);
+    
+    mvLightUniform=[mtlDevice newBufferWithBytes:(void*)&lightPosition length:sizeof(lightPosition) options:MTLResourceCPUCacheModeDefaultCache];
+    
+    
+    //rotationAngle+=1.0;
  
 }
 
@@ -296,8 +314,8 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
         CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
         
         //get the x-position of the touch
-        rotationAngle=touchPosition.x;
-        
+        xPosition=(touchPosition.x-self.view.bounds.size.width/2)/(self.view.bounds.size.width/2);
+        yPosition=(self.view.bounds.size.height/2-touchPosition.y)/(self.view.bounds.size.height/2);
     }
     
 }
@@ -319,8 +337,9 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
         CGPoint touchPosition = [myTouch locationInView: [myTouch view]];
         
         //get the x-position of the touch
-        rotationAngle=touchPosition.x;
         
+        xPosition=(touchPosition.x-self.view.bounds.size.width/2)/(self.view.bounds.size.width/2);
+        yPosition=(self.view.bounds.size.height/2-touchPosition.y)/(self.view.bounds.size.height/2);
     }
 }
 
