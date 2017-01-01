@@ -21,30 +21,34 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     
     VertexOutput vertexOut;
     
-    float4 lightDiffuseColor=float4(0.9, 0.9, 0.9,1.0);
+    float4 lightColor=float4(0.9, 0.9, 0.9,1.0);
     
-    //transform the vertices by the mvp transformation
+    //1. transform the vertices by the mvp transformation
     float4 pos=mvp*vertices[vid];
     
-    //compute lighting
+    //2. transform the normal vectors by the normal matrix space
     
-    float3 eyeNormal=normalize(normalMatrix*normal[vid].xyz);
+    float3 normalVectorInMVSpace=normalize(normalMatrix*normal[vid].xyz);
     
-    float4 eyeCoords=mvMatrix*vertices[vid];
+    //3. transform the vertices of the surface into the Model-View Space
+    float4 verticesInMVSpace=mvMatrix*vertices[vid];
     
-    float3 s=normalize(lightPosition.xyz-eyeCoords.xyz);
+    //4. Compute the direction of the light ray betweent the light position and the vertices of the surface
+    float3 lightRayDirection=normalize(lightPosition.xyz-verticesInMVSpace.xyz);
     
-    //compute diffuse lighting
+    //5. compute shading intensity by computing the dot product. We obtain the maximum the value between 0 and the dot product
     
-    float sDotN=max(0.0,dot(eyeNormal,s));
+    float shadingIntensity=max(0.0,dot(normalVectorInMVSpace,lightRayDirection));
     
-    float4 diffuseLight=sDotN*lightDiffuseColor;
+    //6. Multiply the shading intensity by a light color
+    
+    float4 shadingColor=shadingIntensity*lightColor;
 
-    //add total lighting
+    //7. Pass the shading color to the fragment shader
+    
+    vertexOut.color=shadingColor;
     
     vertexOut.position=pos;
-    
-    vertexOut.color=diffuseLight;
 
     return vertexOut;
     
@@ -53,7 +57,7 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
 
 fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]]){
     
-    //set color fragment to red
+    //set color fragment to shading color
     return float4(vertexOut.color);
     
 }
