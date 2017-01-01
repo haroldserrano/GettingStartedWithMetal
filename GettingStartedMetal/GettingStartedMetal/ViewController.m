@@ -237,12 +237,12 @@
     
     vector_float4 lightPosition={xPosition*5.0,yPosition*5.0+10.0,-5.0,1.0};
     
+    // transform the light position
     lightPosition=matrix_multiply(viewMatrix, lightPosition);
     
+    // load the light position into the MTLBuffer
     mvLightUniform=[mtlDevice newBufferWithBytes:(void*)&lightPosition length:sizeof(lightPosition) options:MTLResourceCPUCacheModeDefaultCache];
     
-    
-    //rotationAngle+=1.0;
  
 }
 
