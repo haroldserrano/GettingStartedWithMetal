@@ -9,6 +9,8 @@
 #import "ViewController.h"
 #import <simd/simd.h>
 #include "models.h"
+#include <vector>
+#include "lodepng.h"
 
 @interface ViewController ()
 
@@ -40,6 +42,8 @@
     
     id<MTLBuffer> normalAttribute;
     
+    id<MTLBuffer> uvAttribute;
+    
     id<MTLBuffer> indicesBuffer;
     
     //Uniform
@@ -48,6 +52,10 @@
     id<MTLBuffer> mvMatrixUniform;
     
     id<MTLBuffer> normalMatrixUniform;
+    
+    id<MTLTexture> texture;
+    
+    id<MTLSamplerState> samplerState;
     
     //light
     id<MTLBuffer> mvLightUniform;
@@ -112,6 +120,13 @@
     
     normalAttribute=[mtlDevice newBufferWithBytes:smallHouseNormals length:sizeof(smallHouseNormals) options:MTLResourceOptionCPUCacheModeDefault];
     
+    uvAttribute=[mtlDevice newBufferWithBytes:smallHouseUV length:sizeof(smallHouseUV) options:MTLResourceCPUCacheModeDefaultCache];
+    
+    [self loadImage];
+    
+    [self createSampler];
+    
+    
     //load the index into the buffer
     indicesBuffer=[mtlDevice newBufferWithBytes:smallHouseIndices length:sizeof(smallHouseIndices) options:MTLResourceOptionCPUCacheModeDefault];
     
@@ -123,6 +138,113 @@
     displayLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(renderPass)];
     
     [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    
+    
+}
+
+-(void) createSampler{
+    
+    MTLSamplerDescriptor *samplerDescriptor=[[MTLSamplerDescriptor alloc] init];
+    
+    samplerDescriptor.minFilter=MTLSamplerMinMagFilterNearest;
+    samplerDescriptor.magFilter=MTLSamplerMinMagFilterLinear;
+    samplerDescriptor.sAddressMode=MTLSamplerAddressModeClampToEdge;
+    samplerDescriptor.tAddressMode=MTLSamplerAddressModeClampToEdge;
+    
+    samplerState=[mtlDevice newSamplerStateWithDescriptor:samplerDescriptor];
+    
+}
+
+-(void) loadImage{
+    
+    std::string uTexture="small_house_01.png";
+    
+    
+    // Load file and decode image.
+    std::vector<unsigned char> image;
+    unsigned int width=0;
+    unsigned int height=0;
+    
+    const char * textureImage = uTexture.c_str();
+    
+    unsigned error = lodepng::decode(image, width, height,textureImage);
+    
+    //if there's an error, display it
+    if(error){
+        std::cout << "decoder error " << error << ": " <<uTexture<<" file is "<< lodepng_error_text(error) << std::endl;
+    }else{
+        
+        /*
+         // Texture size must be power of two for the primitive OpenGL version this is written for. Find next power of two.
+         size_t u2 = 1; while(u2 < width) u2 *= 2;
+         size_t v2 = 1; while(v2 < height) v2 *= 2;
+         // Ratio for power of two version compared to actual version, to render the non power of two image with proper size.
+         //double u3 = (double)width / u2;
+         //double v3 = (double)height / v2;
+         
+         // Make power of two version of the image.
+         std::vector<unsigned char> image2(u2 * v2 * 4);
+         for(size_t y = 0; y < height; y++)
+         for(size_t x = 0; x < width; x++)
+         for(size_t c = 0; c < 4; c++)
+         {
+         image2[4 * u2 * y + 4 * x + c] = image[4 * width * y + 4 * x + c];
+         }
+         */
+        
+        //Flip and invert the image
+        unsigned char* imagePtr=&image[0];
+        
+        int halfTheHeightInPixels=height/2;
+        int heightInPixels=height;
+        
+        
+        //Assume RGBA for 4 components per pixel
+        int numColorComponents=4;
+        
+        //Assuming each color component is an unsigned char
+        int widthInChars=width*numColorComponents;
+        
+        unsigned char *top=NULL;
+        unsigned char *bottom=NULL;
+        unsigned char temp=0;
+        
+        for( int h = 0; h < halfTheHeightInPixels; ++h )
+        {
+            top = imagePtr + h * widthInChars;
+            bottom = imagePtr + (heightInPixels - h - 1) * widthInChars;
+            
+            for( int w = 0; w < widthInChars; ++w )
+            {
+                // Swap the chars around.
+                temp = *top;
+                *top = *bottom;
+                *bottom = temp;
+                
+                ++top;
+                ++bottom;
+            }
+        }
+        
+        
+       //&image[0]
+        
+        
+        //imageWidth=width;
+        //imageHeight=height;
+    }
+    
+    
+    //create the texture descriptor
+    MTLTextureDescriptor *textureDescriptor=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:width height:height mipmapped:NO];
+    
+    //create the texture object
+    texture=[mtlDevice newTextureWithDescriptor:textureDescriptor];
+    
+    //load the texture
+    MTLRegion region=MTLRegionMake2D(0, 0, width, height);
+    
+    [texture replaceRegion:region mipmapLevel:0 withBytes:&image[0] bytesPerRow:4*width];
     
     
 }
@@ -173,6 +295,13 @@
     [renderEncoder setVertexBuffer:mvMatrixUniform offset:0 atIndex:4];
     
     [renderEncoder setVertexBuffer:mvLightUniform offset:0 atIndex:5];
+    
+    [renderEncoder setVertexBuffer:uvAttribute offset:0 atIndex:6];
+    
+    //send the texture
+    [renderEncoder setFragmentTexture:texture atIndex:0];
+    
+    [renderEncoder setFragmentSamplerState:samplerState atIndex:0];
     
     [renderEncoder setDepthStencilState:depthStencilState];
     
@@ -235,7 +364,7 @@
     
     //light position
     
-    vector_float4 lightPosition={xPosition*5.0,yPosition*5.0+10.0,-5.0,1.0};
+    vector_float4 lightPosition={static_cast<float>(xPosition*5.0),static_cast<float>(yPosition*5.0+10.0),-5.0,1.0};
     
     // transform the light position
     lightPosition=matrix_multiply(viewMatrix, lightPosition);

@@ -12,12 +12,13 @@ using namespace metal;
 struct VertexOutput{
     
     float4 position [[position]];
+    float2 uvcoords;
     float4 color;
     
 };
 
 
-vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], constant float4 &lightPosition[[buffer(5)]], uint vid [[vertex_id]]){
+vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], constant float4 &lightPosition[[buffer(5)]], device float2 *uv [[buffer(6)]], uint vid [[vertex_id]]){
     
     VertexOutput vertexOut;
     
@@ -49,15 +50,19 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     vertexOut.color=shadingColor;
     
     vertexOut.position=pos;
+    
+    vertexOut.uvcoords=uv[vid];
 
     return vertexOut;
     
 }
 
 
-fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]]){
+fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]]){
+    
+    float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
     //set color fragment to shading color
-    return float4(vertexOut.color);
+    return float4(mix(sampledColor,vertexOut.color,0.2));
     
 }

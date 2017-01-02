@@ -10,6 +10,9 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 #import <GLKit/GLKMath.h>
+#include <iostream>
+
+#define METALAPI
 
 @interface ViewController : UIViewController
 
