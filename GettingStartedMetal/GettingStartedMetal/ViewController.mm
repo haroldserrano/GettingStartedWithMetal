@@ -64,6 +64,10 @@
     float xPosition;
     float yPosition;
     
+    // Decode image raw data
+    std::vector<unsigned char> rawImageData;
+    unsigned int imageWidth;
+    unsigned int imageHeight;
 }
 
 - (void)viewDidLoad {
@@ -115,20 +119,27 @@
     
     //6. create resources
     
-    //load the data attribute into the buffer
+    //6a. load the data attribute into the buffer
     vertexAttribute=[mtlDevice newBufferWithBytes:smallHouseVertices length:sizeof(smallHouseVertices) options:MTLResourceOptionCPUCacheModeDefault];
     
+    //6b. load normal vector attribute data into the buffer
     normalAttribute=[mtlDevice newBufferWithBytes:smallHouseNormals length:sizeof(smallHouseNormals) options:MTLResourceOptionCPUCacheModeDefault];
     
+    //6c. Load UV-Coordinate attribute data into the buffer
     uvAttribute=[mtlDevice newBufferWithBytes:smallHouseUV length:sizeof(smallHouseUV) options:MTLResourceCPUCacheModeDefaultCache];
     
-    [self loadImage];
-    
-    [self createSampler];
-    
-    
-    //load the index into the buffer
+    //6d. load the index into the buffer
     indicesBuffer=[mtlDevice newBufferWithBytes:smallHouseIndices length:sizeof(smallHouseIndices) options:MTLResourceOptionCPUCacheModeDefault];
+    
+    //7. Decode the image-Obtains a pointer to the raw data.
+    [self decodeImage];
+    
+    //8. Create a Texture Object and load the image raw data
+    [self createTextureObject];
+    
+    //9. Create a Sampler State Object and set the filtering parameters
+    [self createSamplerObject];
+    
     
     //set initial position to 0
     xPosition=0.0;
@@ -142,68 +153,68 @@
     
 }
 
--(void) createSampler{
+-(void) createTextureObject{
     
+    //1. create the texture descriptor
+    MTLTextureDescriptor *textureDescriptor=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:imageWidth height:imageHeight mipmapped:NO];
+    
+    //2. create the texture object
+    texture=[mtlDevice newTextureWithDescriptor:textureDescriptor];
+    
+    //3. copy the raw image data into the texture object
+    
+    MTLRegion region=MTLRegionMake2D(0, 0, imageWidth, imageHeight);
+    
+    [texture replaceRegion:region mipmapLevel:0 withBytes:&rawImageData[0] bytesPerRow:4*imageWidth];
+  
+}
+
+-(void) createSamplerObject{
+    
+    //1. create a Sampler Descriptor
     MTLSamplerDescriptor *samplerDescriptor=[[MTLSamplerDescriptor alloc] init];
     
-    samplerDescriptor.minFilter=MTLSamplerMinMagFilterNearest;
+    //2. Set the filtering and addressing settings
+    samplerDescriptor.minFilter=MTLSamplerMinMagFilterLinear;
     samplerDescriptor.magFilter=MTLSamplerMinMagFilterLinear;
     samplerDescriptor.sAddressMode=MTLSamplerAddressModeClampToEdge;
     samplerDescriptor.tAddressMode=MTLSamplerAddressModeClampToEdge;
     
+    //3. Create the Sampler State object
     samplerState=[mtlDevice newSamplerStateWithDescriptor:samplerDescriptor];
     
 }
 
--(void) loadImage{
+-(void) decodeImage{
     
+    //name of image in project.
     std::string uTexture="small_house_01.png";
     
+    imageWidth=0.0;
+    imageHeight=0.0;
     
     // Load file and decode image.
-    std::vector<unsigned char> image;
-    unsigned int width=0;
-    unsigned int height=0;
-    
     const char * textureImage = uTexture.c_str();
     
-    unsigned error = lodepng::decode(image, width, height,textureImage);
+    unsigned error = lodepng::decode(rawImageData, imageWidth, imageHeight,textureImage);
     
     //if there's an error, display it
     if(error){
         std::cout << "decoder error " << error << ": " <<uTexture<<" file is "<< lodepng_error_text(error) << std::endl;
     }else{
         
-        /*
-         // Texture size must be power of two for the primitive OpenGL version this is written for. Find next power of two.
-         size_t u2 = 1; while(u2 < width) u2 *= 2;
-         size_t v2 = 1; while(v2 < height) v2 *= 2;
-         // Ratio for power of two version compared to actual version, to render the non power of two image with proper size.
-         //double u3 = (double)width / u2;
-         //double v3 = (double)height / v2;
-         
-         // Make power of two version of the image.
-         std::vector<unsigned char> image2(u2 * v2 * 4);
-         for(size_t y = 0; y < height; y++)
-         for(size_t x = 0; x < width; x++)
-         for(size_t c = 0; c < 4; c++)
-         {
-         image2[4 * u2 * y + 4 * x + c] = image[4 * width * y + 4 * x + c];
-         }
-         */
-        
         //Flip and invert the image
-        unsigned char* imagePtr=&image[0];
+        unsigned char* imagePtr=&rawImageData[0];
         
-        int halfTheHeightInPixels=height/2;
-        int heightInPixels=height;
+        int halfTheHeightInPixels=imageHeight/2;
+        int heightInPixels=imageHeight;
         
         
         //Assume RGBA for 4 components per pixel
         int numColorComponents=4;
         
         //Assuming each color component is an unsigned char
-        int widthInChars=width*numColorComponents;
+        int widthInChars=imageWidth*numColorComponents;
         
         unsigned char *top=NULL;
         unsigned char *bottom=NULL;
@@ -225,27 +236,7 @@
                 ++bottom;
             }
         }
-        
-        
-       //&image[0]
-        
-        
-        //imageWidth=width;
-        //imageHeight=height;
     }
-    
-    
-    //create the texture descriptor
-    MTLTextureDescriptor *textureDescriptor=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:width height:height mipmapped:NO];
-    
-    //create the texture object
-    texture=[mtlDevice newTextureWithDescriptor:textureDescriptor];
-    
-    //load the texture
-    MTLRegion region=MTLRegionMake2D(0, 0, width, height);
-    
-    [texture replaceRegion:region mipmapLevel:0 withBytes:&image[0] bytesPerRow:4*width];
-    
     
 }
 
@@ -290,29 +281,37 @@
     //10d. set the uniform buffer and the index for the data
     [renderEncoder setVertexBuffer:mvpMatrixUniform offset:0 atIndex:2];
     
+    //10e. set the uniform buffer for the normal matrix
     [renderEncoder setVertexBuffer:normalMatrixUniform offset:0 atIndex:3];
     
+    //10f. set the uniform buffer for the Model-View Matrix
     [renderEncoder setVertexBuffer:mvMatrixUniform offset:0 atIndex:4];
     
+    //10g. Set the uniform for the Light position
     [renderEncoder setVertexBuffer:mvLightUniform offset:0 atIndex:5];
     
+    //10h. Set the vertex buffer for the uv Attribute
     [renderEncoder setVertexBuffer:uvAttribute offset:0 atIndex:6];
     
-    //send the texture
+    //10i. Set the fragment texture
     [renderEncoder setFragmentTexture:texture atIndex:0];
     
+    //10j. set the fragment sampler
     [renderEncoder setFragmentSamplerState:samplerState atIndex:0];
     
+    //10k.
     [renderEncoder setDepthStencilState:depthStencilState];
     
+    //10l.
     [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
     
+    //10m.
     [renderEncoder setCullMode:MTLCullModeFront];
     
-    //10e. Set the draw command
+    //10n. Set the draw command
     [renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:[indicesBuffer length]/sizeof(uint16_t) indexType:MTLIndexTypeUInt16 indexBuffer:indicesBuffer indexBufferOffset:0];
     
-    //10f. End encoding
+    //10p. End encoding
     [renderEncoder endEncoding];
     
     //11. present the drawable

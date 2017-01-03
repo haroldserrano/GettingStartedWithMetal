@@ -45,13 +45,13 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     
     float4 shadingColor=shadingIntensity*lightColor;
 
-    //7. Pass the shading color to the fragment shader
-    
+    //7a. Pass the shading color to the fragment shader
     vertexOut.color=shadingColor;
     
-    vertexOut.position=pos;
-    
+    //7b. Pass the uv coordinates to the fragment shader
     vertexOut.uvcoords=uv[vid];
+    
+    vertexOut.position=pos;
 
     return vertexOut;
     
@@ -60,6 +60,7 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
 
 fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]]){
     
+    //asmple the texture color
     float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
     //set color fragment to shading color
