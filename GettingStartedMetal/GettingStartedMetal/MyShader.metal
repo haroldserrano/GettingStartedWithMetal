@@ -60,10 +60,10 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
 
 fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]]){
     
-    //asmple the texture color
+    //sample the texture color
     float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
-    //set color fragment to shading color
+    //set color fragment to the mix value of the shading and sampled color
     return float4(mix(sampledColor,vertexOut.color,0.2));
     
 }

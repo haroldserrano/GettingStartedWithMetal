@@ -42,6 +42,7 @@
     
     id<MTLBuffer> normalAttribute;
     
+    // UV coordinate attribute
     id<MTLBuffer> uvAttribute;
     
     id<MTLBuffer> indicesBuffer;
@@ -53,8 +54,10 @@
     
     id<MTLBuffer> normalMatrixUniform;
     
+    // Texture object
     id<MTLTexture> texture;
     
+    //Sampler State object
     id<MTLSamplerState> samplerState;
     
     //light
@@ -174,10 +177,14 @@
     //1. create a Sampler Descriptor
     MTLSamplerDescriptor *samplerDescriptor=[[MTLSamplerDescriptor alloc] init];
     
-    //2. Set the filtering and addressing settings
+    //2a. Set the filtering and addressing settings
     samplerDescriptor.minFilter=MTLSamplerMinMagFilterLinear;
     samplerDescriptor.magFilter=MTLSamplerMinMagFilterLinear;
+    
+    //2b. set the addressing mode for the S component
     samplerDescriptor.sAddressMode=MTLSamplerAddressModeClampToEdge;
+    
+    //2c. set the addressing mode for the T component
     samplerDescriptor.tAddressMode=MTLSamplerAddressModeClampToEdge;
     
     //3. Create the Sampler State object
