@@ -115,7 +115,8 @@ fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<fl
     //sample the texture color
     float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
-    //set color fragment to the mix value of the shading and sampled color
-    return float4(mix(sampledColor,vertexOut.color,0.5));
-    //return float4(vertexOut.color);
+    //UNCOMMENT THIS LINE IF YOU WANT TO COMBINE THE LIGHT COLOR WITH THE TEXTURE. set color fragment to the mix value of the shading and sampled color
+    //return float4(mix(sampledColor,vertexOut.color,0.5));
+    
+    return float4(vertexOut.color);
 }
