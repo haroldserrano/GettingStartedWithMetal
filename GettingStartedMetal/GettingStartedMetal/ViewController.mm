@@ -295,7 +295,7 @@
     [renderEncoder setVertexBuffer:mvMatrixUniform offset:0 atIndex:4];
     
     //10g. Set the uniform for the Light position
-    [renderEncoder setVertexBuffer:mvLightUniform offset:0 atIndex:5];
+    [renderEncoder setFragmentBuffer:mvLightUniform offset:0 atIndex:1];
     
     //10h. Set the vertex buffer for the uv Attribute
     [renderEncoder setVertexBuffer:uvAttribute offset:0 atIndex:6];
@@ -338,7 +338,7 @@
     matrix_float4x4 worldMatrix=matrix_identity_float4x4;
     
     //Set the camera position in the z-direction
-    matrix_float4x4 viewMatrix=matrix_multiply(matrix_from_rotation(-10.0*M_PI/180, 1.0, 0.0, 0.0),matrix_from_translation(0.0, -3.0, 15.0));
+    matrix_float4x4 viewMatrix=matrix_multiply(matrix_from_rotation(-10.0*M_PI/180, 1.0, 0.0, 0.0),matrix_from_translation(0.0, -2.0, 10.0));
     
     //compute the projective-perspective matrix
     float aspect=self.view.bounds.size.width/self.view.bounds.size.height;

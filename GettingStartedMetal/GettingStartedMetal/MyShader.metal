@@ -13,7 +13,8 @@ struct VertexOutput{
     
     float4 position [[position]];
     float2 uvcoords;
-    float4 color;
+    float3 normalVectorInMVSpace;
+    float4 verticesInMVSpace;
     
 };
 
@@ -50,7 +51,7 @@ constant Material material={
 };
 
 
-vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], constant float4 &lightPosition[[buffer(5)]], device float2 *uv [[buffer(6)]], uint vid [[vertex_id]]){
+vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device float4 *normal [[buffer(1)]], constant float4x4 &mvp [[buffer(2)]], constant float3x3 &normalMatrix [[buffer(3)]], constant float4x4 &mvMatrix[[buffer(4)]], device float2 *uv [[buffer(6)]], uint vid [[vertex_id]]){
     
     VertexOutput vertexOut;
     
@@ -64,23 +65,45 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     //3. transform the vertices of the surface into the Model-View Space
     float4 verticesInMVSpace=mvMatrix*vertices[vid];
     
+    
+    //12. Pass the uv coordinates to the fragment shader
+    vertexOut.uvcoords=uv[vid];
+    
+    vertexOut.position=pos;
+    
+    vertexOut.verticesInMVSpace=verticesInMVSpace;
+    
+    vertexOut.normalVectorInMVSpace=normalVectorInMVSpace;
+
+    return vertexOut;
+    
+}
+
+
+fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]], constant float4 &lightPosition[[buffer(1)]]){
+    
+    //sample the texture color
+    float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
+    
+    
+    
     //4. Compute the direction of the light ray betweent the light position and the vertices of the surface
-    float3 lightRayDirection=normalize(lightPosition.xyz-verticesInMVSpace.xyz);
+    float3 lightRayDirection=normalize(lightPosition.xyz-vertexOut.verticesInMVSpace.xyz);
     
     
     //5. Compute View Vector
-    float3 viewVector=normalize(-verticesInMVSpace.xyz);
+    float3 viewVector=normalize(-vertexOut.verticesInMVSpace.xyz);
     
     //6. Compute reflection vector
-    float3 reflectionVector=reflect(-lightRayDirection,normalVectorInMVSpace);
-
+    float3 reflectionVector=reflect(-lightRayDirection,vertexOut.normalVectorInMVSpace);
+    
     //COMPUTE LIGHTS
     
     //compute ambient lighting
     float3 ambientLight=light.ambientColor*material.ambientReflection;
     
     //7. compute diffuse intensity by computing the dot product. We obtain the maximum the value between 0 and the dot product
-    float diffuseIntensity=max(0.0,dot(normalVectorInMVSpace,lightRayDirection));
+    float diffuseIntensity=max(0.0,dot(vertexOut.normalVectorInMVSpace,lightRayDirection));
     
     //8. compute Diffuse Color
     float3 diffuseLight=diffuseIntensity*light.diffuseColor*material.diffuseReflection;
@@ -96,26 +119,10 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     
     //10. Add total lights
     float4 totalLights=float4(ambientLight+diffuseLight+specularLight,1.0);
-
-    //11.. Pass the light color to the fragment shader
-    vertexOut.color=totalLights;
     
-    //12. Pass the uv coordinates to the fragment shader
-    vertexOut.uvcoords=uv[vid];
-    
-    vertexOut.position=pos;
 
-    return vertexOut;
-    
-}
-
-
-fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]]){
-    
-    //sample the texture color
-    float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
     //set color fragment to the mix value of the shading and light
-    return float4(mix(sampledColor,vertexOut.color,0.5));
+    return float4(mix(sampledColor,totalLights,0.5));
     
 }
