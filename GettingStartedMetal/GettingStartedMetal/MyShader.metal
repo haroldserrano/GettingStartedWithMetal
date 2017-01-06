@@ -66,13 +66,16 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     float4 verticesInMVSpace=mvMatrix*vertices[vid];
     
     
-    //12. Pass the uv coordinates to the fragment shader
+    //4. Pass the uv coordinates to the fragment shader
     vertexOut.uvcoords=uv[vid];
     
+    //5. Pass the position
     vertexOut.position=pos;
     
+    //6. Pass the vertices in MV space
     vertexOut.verticesInMVSpace=verticesInMVSpace;
     
+    //7. Pass the normal vector in MV space
     vertexOut.normalVectorInMVSpace=normalVectorInMVSpace;
 
     return vertexOut;
@@ -82,33 +85,30 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
 
 fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<float> texture [[texture(0)]], sampler sam [[sampler(0)]], constant float4 &lightPosition[[buffer(1)]]){
     
-    //sample the texture color
+    //1. sample the texture color
     float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
-    
-    
-    //4. Compute the direction of the light ray betweent the light position and the vertices of the surface
+    //2. Compute the direction of the light ray betweent the light position and the vertices of the surface
     float3 lightRayDirection=normalize(lightPosition.xyz-vertexOut.verticesInMVSpace.xyz);
     
-    
-    //5. Compute View Vector
+    //3. Compute View Vector
     float3 viewVector=normalize(-vertexOut.verticesInMVSpace.xyz);
     
-    //6. Compute reflection vector
+    //4. Compute reflection vector
     float3 reflectionVector=reflect(-lightRayDirection,vertexOut.normalVectorInMVSpace);
     
     //COMPUTE LIGHTS
     
-    //compute ambient lighting
+    //5. compute ambient lighting
     float3 ambientLight=light.ambientColor*material.ambientReflection;
     
-    //7. compute diffuse intensity by computing the dot product. We obtain the maximum the value between 0 and the dot product
+    //6. compute diffuse intensity by computing the dot product. We obtain the maximum the value between 0 and the dot product
     float diffuseIntensity=max(0.0,dot(vertexOut.normalVectorInMVSpace,lightRayDirection));
     
-    //8. compute Diffuse Color
+    //7. compute Diffuse Color
     float3 diffuseLight=diffuseIntensity*light.diffuseColor*material.diffuseReflection;
     
-    //9. compute specular lighting
+    //8. compute specular lighting
     float3 specularLight=float3(0.0,0.0,0.0);
     
     if(diffuseIntensity>0.0){
@@ -117,12 +117,10 @@ fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<fl
         
     }
     
-    //10. Add total lights
+    //9. Add total lights
     float4 totalLights=float4(ambientLight+diffuseLight+specularLight,1.0);
     
-
-    
-    //set color fragment to the mix value of the shading and light
+    //10. set color fragment to the mix value of the shading and light
     return float4(mix(sampledColor,totalLights,0.5));
     
 }
