@@ -27,10 +27,10 @@ struct Light{
 
 struct Material{
     
-    float3 ambientColor;
-    float3 diffuseColor;
-    float3 specularColor;
-    float specularPower;
+    float3 ambientReflection;
+    float3 diffuseReflection;
+    float3 specularReflection;
+    float specularReflectionPower;
 };
 
 
@@ -42,10 +42,10 @@ constant Light light={
 
 constant Material material={
     
-    .ambientColor={0.1,0.1,0.1},
-    .diffuseColor={1.0,1.0,1.0},
-    .specularColor={1.0,1.0,1.0},
-    .specularPower=5
+    .ambientReflection={0.1,0.1,0.1},
+    .diffuseReflection={1.0,1.0,1.0},
+    .specularReflection={1.0,1.0,1.0},
+    .specularReflectionPower=5
     
 };
 
@@ -77,20 +77,20 @@ vertex VertexOutput vertexShader(device float4 *vertices [[buffer(0)]], device f
     //COMPUTE LIGHTS
     
     //compute ambient lighting
-    float3 ambientLight=light.ambientColor*material.ambientColor;
+    float3 ambientLight=light.ambientColor*material.ambientReflection;
     
     //7. compute diffuse intensity by computing the dot product. We obtain the maximum the value between 0 and the dot product
     float diffuseIntensity=max(0.0,dot(normalVectorInMVSpace,lightRayDirection));
     
     //8. compute Diffuse Color
-    float3 diffuseLight=diffuseIntensity*light.diffuseColor*material.diffuseColor;
+    float3 diffuseLight=diffuseIntensity*light.diffuseColor*material.diffuseReflection;
     
     //9. compute specular lighting
     float3 specularLight=float3(0.0,0.0,0.0);
     
     if(diffuseIntensity>0.0){
         
-        specularLight=light.specularColor*material.specularColor*pow(max(dot(reflectionVector,viewVector),0.0),material.specularPower);
+        specularLight=light.specularColor*material.specularReflection*pow(max(dot(reflectionVector,viewVector),0.0),material.specularReflectionPower);
         
     }
     
@@ -115,8 +115,7 @@ fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<fl
     //sample the texture color
     float4 sampledColor=texture.sample(sam, vertexOut.uvcoords);
     
-    //UNCOMMENT THIS LINE IF YOU WANT TO COMBINE THE LIGHT COLOR WITH THE TEXTURE. set color fragment to the mix value of the shading and sampled color
-    //return float4(mix(sampledColor,vertexOut.color,0.5));
+    //set color fragment to the mix value of the shading and light
+    return float4(mix(sampledColor,vertexOut.color,0.5));
     
-    return float4(vertexOut.color);
 }

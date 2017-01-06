@@ -123,16 +123,16 @@
     //6. create resources
     
     //6a. load the data attribute into the buffer
-    vertexAttribute=[mtlDevice newBufferWithBytes:smallHouseVertices length:sizeof(smallHouseVertices) options:MTLResourceOptionCPUCacheModeDefault];
+    vertexAttribute=[mtlDevice newBufferWithBytes:fortVertices length:sizeof(fortVertices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //6b. load normal vector attribute data into the buffer
-    normalAttribute=[mtlDevice newBufferWithBytes:smallHouseNormals length:sizeof(smallHouseNormals) options:MTLResourceOptionCPUCacheModeDefault];
+    normalAttribute=[mtlDevice newBufferWithBytes:fortNormals length:sizeof(fortNormals) options:MTLResourceOptionCPUCacheModeDefault];
     
     //6c. Load UV-Coordinate attribute data into the buffer
-    uvAttribute=[mtlDevice newBufferWithBytes:smallHouseUV length:sizeof(smallHouseUV) options:MTLResourceCPUCacheModeDefaultCache];
+    uvAttribute=[mtlDevice newBufferWithBytes:fortUV length:sizeof(fortUV) options:MTLResourceCPUCacheModeDefaultCache];
     
     //6d. load the index into the buffer
-    indicesBuffer=[mtlDevice newBufferWithBytes:smallHouseIndices length:sizeof(smallHouseIndices) options:MTLResourceOptionCPUCacheModeDefault];
+    indicesBuffer=[mtlDevice newBufferWithBytes:fortIndices length:sizeof(fortIndices) options:MTLResourceOptionCPUCacheModeDefault];
     
     //7. Decode the image-Obtains a pointer to the raw data.
     [self decodeImage];
@@ -195,7 +195,7 @@
 -(void) decodeImage{
     
     //name of image in project.
-    std::string uTexture="small_house_01.png";
+    std::string uTexture="fort.png";
     
     imageWidth=0.0;
     imageHeight=0.0;
@@ -338,7 +338,7 @@
     matrix_float4x4 worldMatrix=matrix_identity_float4x4;
     
     //Set the camera position in the z-direction
-    matrix_float4x4 viewMatrix=matrix_multiply(matrix_from_rotation(-10.0*M_PI/180, 1.0, 0.0, 0.0),matrix_from_translation(0.0, -3.0, 10.0));
+    matrix_float4x4 viewMatrix=matrix_multiply(matrix_from_rotation(-10.0*M_PI/180, 1.0, 0.0, 0.0),matrix_from_translation(0.0, -3.0, 15.0));
     
     //compute the projective-perspective matrix
     float aspect=self.view.bounds.size.width/self.view.bounds.size.height;

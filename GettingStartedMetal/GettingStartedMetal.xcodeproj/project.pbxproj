@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		036A046E1E1AC4410020823A /* small_house_01.png in Resources */ = {isa = PBXBuildFile; fileRef = 036A046D1E1AC4410020823A /* small_house_01.png */; };
+		0310261E1E1F548B00260204 /* fort.png in Resources */ = {isa = PBXBuildFile; fileRef = 0310261D1E1F548B00260204 /* fort.png */; };
 		03EBB76B1E1ABCCC00EE047A /* lodepng.mm in Sources */ = {isa = PBXBuildFile; fileRef = 03EBB76A1E1ABCCC00EE047A /* lodepng.mm */; };
 		03F1B93A1E0E5D2000762B86 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 03F1B9391E0E5D2000762B86 /* main.m */; };
 		03F1B93D1E0E5D2000762B86 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 03F1B93C1E0E5D2000762B86 /* AppDelegate.mm */; };
@@ -41,7 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		036A046D1E1AC4410020823A /* small_house_01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = small_house_01.png; sourceTree = "<group>"; };
+		0310261D1E1F548B00260204 /* fort.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = fort.png; sourceTree = "<group>"; };
 		03EBB7691E1ABCCC00EE047A /* lodepng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lodepng.h; sourceTree = "<group>"; };
 		03EBB76A1E1ABCCC00EE047A /* lodepng.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = lodepng.mm; sourceTree = "<group>"; };
 		03F1B9351E0E5D2000762B86 /* GettingStartedMetal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GettingStartedMetal.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,7 +98,7 @@
 		036A046C1E1AC40A0020823A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				036A046D1E1AC4410020823A /* small_house_01.png */,
+				0310261D1E1F548B00260204 /* fort.png */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -291,8 +291,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				03F1B9481E0E5D2000762B86 /* LaunchScreen.storyboard in Resources */,
-				036A046E1E1AC4410020823A /* small_house_01.png in Resources */,
 				03F1B9451E0E5D2000762B86 /* Assets.xcassets in Resources */,
+				0310261E1E1F548B00260204 /* fort.png in Resources */,
 				03F1B9431E0E5D2000762B86 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
