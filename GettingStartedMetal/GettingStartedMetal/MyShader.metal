@@ -91,7 +91,7 @@ fragment float4 fragmentShader(VertexOutput vertexOut [[stage_in]], texture2d<fl
     //2. Compute the direction of the light ray betweent the light position and the vertices of the surface
     float3 lightRayDirection=normalize(lightPosition.xyz-vertexOut.verticesInMVSpace.xyz);
     
-    //3. Compute View Vector
+    //3. Normalize View Vector
     float3 viewVector=normalize(-vertexOut.verticesInMVSpace.xyz);
     
     //4. Compute reflection vector
